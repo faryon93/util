@@ -27,8 +27,20 @@ package util
 // ---------------------------------------------------------------------------------------
 
 import (
+	"encoding/json"
+	"errors"
 	"net"
 	"net/http"
+
+	"github.com/gorilla/schema"
+)
+
+// ---------------------------------------------------------------------------------------
+//  errors
+// ---------------------------------------------------------------------------------------
+
+var (
+	ErrInvalidContentType = errors.New("invalid content type")
 )
 
 // ---------------------------------------------------------------------------------------
@@ -50,4 +62,37 @@ func GetRemoteAddr(r *http.Request) string {
 	}
 
 	return remote
+}
+
+// Jsonify writes the JSON representation of v to the supplied
+// http.ResposeWriter. If an error occours while marshalling the
+// http response will be an internal server error.
+func Jsonify(w http.ResponseWriter, v interface{}) {
+	js, err := json.Marshal(v)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+}
+
+// ParseBody reads the body of the request and parses it into v.
+func ParseBody(r *http.Request, v interface{}) error {
+	switch r.Header.Get("Content-Type") {
+	case "application/x-www-form-urlencoded":
+		err := r.ParseForm()
+		if err != nil {
+			return err
+		}
+
+		return schema.NewDecoder().Decode(v, r.Form)
+
+	case "application/json":
+		return json.NewDecoder(r.Body).Decode(v)
+
+	default:
+		return ErrInvalidContentType
+	}
 }
