@@ -33,6 +33,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/schema"
+	"strings"
 )
 
 // ---------------------------------------------------------------------------------------
@@ -80,7 +81,12 @@ func Jsonify(w http.ResponseWriter, v interface{}) {
 
 // ParseBody reads the body of the request and parses it into v.
 func ParseBody(r *http.Request, v interface{}) error {
-	switch r.Header.Get("Content-Type") {
+	header := strings.Split(r.Header.Get("Content-Type"), ";")
+	if len(header) < 1 {
+		return ErrInvalidContentType
+	}
+
+	switch header[0] {
 	case "application/x-www-form-urlencoded":
 		err := r.ParseForm()
 		if err != nil {
