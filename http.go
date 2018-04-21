@@ -77,6 +77,12 @@ func GetRemoteAddr(r *http.Request) string {
 	return remote
 }
 
+// GetHostname return the Host Header of an http request.
+// The Host is stripped from any port.
+func GetHostname(r *http.Request) string {
+	return StripPort(r.Host)
+}
+
 // Jsonify writes the JSON representation of v to the supplied
 // http.ResposeWriter. If an error occours while marshalling the
 // http response will be an internal server error.
