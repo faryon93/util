@@ -27,13 +27,15 @@ package util
 // ---------------------------------------------------------------------------------------
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/schema"
-	"strings"
 )
 
 // ---------------------------------------------------------------------------------------
@@ -43,6 +45,16 @@ import (
 var (
 	ErrInvalidContentType = errors.New("invalid content type")
 )
+
+// ---------------------------------------------------------------------------------------
+//  types
+// ---------------------------------------------------------------------------------------
+
+// RequestBody represents the body of a request
+// which was saved with SaveRequestBody().
+type RequestBody struct {
+	*bytes.Buffer
+}
 
 // ---------------------------------------------------------------------------------------
 //  public functions
@@ -101,4 +113,24 @@ func ParseBody(r *http.Request, v interface{}) error {
 	default:
 		return ErrInvalidContentType
 	}
+}
+
+// SaveRequestBody saves the body of a request in order
+// to restore it later.
+func SaveRequestBody(r *http.Request) *RequestBody {
+	// read the whole body
+	body, _ := ioutil.ReadAll(r.Body)
+	buf := bytes.NewBuffer(body)
+	r.Body.Close()
+
+	// reinsert the new body into the request in order to be read again
+	r.Body = ioutil.NopCloser(buf)
+
+	return &RequestBody{buf}
+}
+
+// Restore reinserts the saved body into the given request.
+func (b *RequestBody) Restore(r *http.Request) *http.Request {
+	r.Body = ioutil.NopCloser(b)
+	return r
 }
