@@ -105,7 +105,9 @@ func ParseBody(r *http.Request, v interface{}) error {
 			return err
 		}
 
-		return schema.NewDecoder().Decode(v, r.Form)
+		decoder := schema.NewDecoder()
+		decoder.IgnoreUnknownKeys(true)
+		return decoder.Decode(v, r.Form)
 
 	case "application/json":
 		return json.NewDecoder(r.Body).Decode(v)
