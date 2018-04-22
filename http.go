@@ -115,11 +115,8 @@ func ParseBody(r *http.Request, v interface{}) error {
 		decoder.IgnoreUnknownKeys(true)
 		return decoder.Decode(v, r.Form)
 
-	case "application/json":
-		return json.NewDecoder(r.Body).Decode(v)
-
 	default:
-		return ErrInvalidContentType
+		return json.NewDecoder(r.Body).Decode(v)
 	}
 }
 
