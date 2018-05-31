@@ -36,6 +36,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/schema"
+	"log"
 )
 
 // ---------------------------------------------------------------------------------------
@@ -124,14 +125,16 @@ func ParseBody(r *http.Request, v interface{}) error {
 // to restore it later.
 func SaveRequestBody(r *http.Request) *RequestBody {
 	// read the whole body
-	body, _ := ioutil.ReadAll(r.Body)
-	buf := bytes.NewBuffer(body)
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Println("error:", err)
+	}
 	r.Body.Close()
 
 	// reinsert the new body into the request in order to be read again
-	r.Body = ioutil.NopCloser(buf)
+	r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 
-	return &RequestBody{buf}
+	return &RequestBody{bytes.NewBuffer(body)}
 }
 
 // Restore reinserts the saved body into the given request.
